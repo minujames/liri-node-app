@@ -1,15 +1,11 @@
 
 var inputArgs = process.argv;
-
 if(inputArgs.length === 2){
   return console.log("Please enter a command for liri");
 }
 
 var command = inputArgs[2];
-
 var queryString = inputArgs.slice(3).join(" ").trim();
-console.log("query string: ", queryString);
-
 doAction(command, queryString);
 
 function doAction(command, queryString){
@@ -66,7 +62,6 @@ function spotifySong(song){
 
   var queryStr = (song === undefined || song === "") ? 
   'artist:Ace+of+Base+album:the+sign+track:the+sign' : 'track:'+ song.split(" ").join("+");
-  console.log(queryStr);
 
   spotifyClient.search({ type: 'track', query: queryStr}, function(err, data) {
     if (!err) {
@@ -104,7 +99,6 @@ function spotifySong(song){
 function getMovieInfo(movie){
   var request = require("request");
   var movieName = (movie === undefined || movie === "")? "Mr. Nobody." : movie;
-  console.log(movieName);
 
   var queryUrl = "http://www.omdbapi.com/?t=" + movieName + "&apikey=40e9cece&type=movie";
 
