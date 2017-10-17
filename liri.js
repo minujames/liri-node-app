@@ -7,27 +7,27 @@ if(inputArgs.length === 2){
 
 var command = inputArgs[2];
 
-var queryString = inputArgs.slice(3).join("+");
-console.log("qStr: ", queryString);
+var queryString = inputArgs.slice(3).join(" ");
+console.log("query string: ", queryString);
 
 doAction(command, queryString);
 
 function doAction(command, queryString){
   switch(command){
     case 'my-tweets': 
-      getTweets();
-      break;
+    getTweets();
+    break;
     case 'spotify-this-song':
-      spotifySong(queryString);
-      break;
+    spotifySong(queryString);
+    break;
     case 'movie-this':
-      getMovieInfo(queryString);
-      break;
+    getMovieInfo(queryString);
+    break;
     case 'do-what-it-says':
-      doWhatItSays();
-      break;
+    doWhatItSays();
+    break;
     default: 
-      console.log("Invalid command");
+    console.log("Invalid command");
   }
 }
 
@@ -38,46 +38,70 @@ function getTweets(){
 
   var params = {screen_name: 'MichelleObama', count: 20};
   twitterClient.get('statuses/user_timeline', params, function(error, tweets, response) {
-    if (!error) {
+    if (!error && response.statusCode === 200) {
+      var commandString = "command: [my-tweets]";
+      var output = [];
+
       tweets.forEach(function(tweet, index){
-        console.log("--------------------------------------------------");
-        console.log(index + 1, tweet.text);
-        console.log("Created At: ", tweet.created_at);
-        console.log("--------------------------------------------------");
+        
+        output.push((index + 1 ) + ". " + tweet.text);
+        output.push("Created At: " + tweet.created_at);
+        output.push("--------------------------------------------------");
       });
+      var outputStr = output.join("\n");
+      console.log(outputStr);
+      log(commandString, outputStr);
     }
   });
 }
 
 function spotifySong(song){
-  var songName =  (song === undefined || song === "") ? "The Sign": song; //inputArgs[3];
 
-  var Spotify = require('node-spotify-api');
- 
-  var spotify = new Spotify({
+  var spotify = require('node-spotify-api');
+
+  var spotifyClient = new spotify({
     id: 'b82b7d215c52431d855a0e11160402a8',
     secret: '376bd62095bd4ff5880f9b62c8a3e6a0'
   });
-   
-  spotify.search({ type: 'track', query: songName}, function(err, data) {
-    if (err) {
-      return console.log('Error occurred: ' + err);
-    }
-    
-    data.tracks.items.forEach(function(track){
-      var artistsArray = [];
-      track.artists.forEach(function(artist){
-        artistsArray.push(artist.name);
-      });
 
-      console.log("--------------------------------------------------");
-      console.log("Artists: ", artistsArray.join(", "));
-      console.log("Song Name: ", track.name);
-      console.log("Preview Link: ", track.preview_url);
-      console.log("Album: ", track.album.name)
-      console.log("--------------------------------------------------");
-    });
-  });
+  var queryStr = (song === undefined || song === "") ? 
+  'artist:Ace+of+Base+album:the+sign+track:the+sign' : 'track:'+ song.split(" ").join("+");
+  console.log(queryStr);
+
+  spotifyClient.search({ type: 'track', query: queryStr}, function(err, data) {
+    console.log("data: ", data);
+
+    if (!err) {
+
+      var querySong = (song === undefined || song === "") ? "The Sign by Ace of Base" : song;
+      var commandString = "command: [spotify-this-song : "+ querySong +"]";
+
+      var output = [];
+
+      var tracks = data.tracks.items;
+      if(tracks.length === 0){
+        output.push("Song not found");
+        output.push("--------------------------------------------------")
+      }
+      else{
+        tracks.forEach(function(track){
+          var artistsArray = [];
+          track.artists.forEach(function(artist){
+            artistsArray.push(artist.name);
+          });
+
+          output.push("Artists: " + artistsArray.join(", "));
+          output.push("Song Name: " + track.name);
+          output.push("Preview Link: " + track.preview_url);
+          output.push("Album: " + track.album.name);
+          output.push("--------------------------------------------------")
+        });
+      }
+      var outputStr = output.join("\n");
+      console.log(outputStr);
+      log(commandString, outputStr);
+    }
+  });  
 }
 
 function getMovieInfo(movie){
@@ -88,31 +112,41 @@ function getMovieInfo(movie){
 
   var queryUrl = "http://www.omdbapi.com/?t=" + movieName + "&apikey=40e9cece&type=movie";
 
-  request(queryUrl, function(error, response, body) {
+  request(queryUrl, function(error, response, body) { 
+    if (!error && response.statusCode === 200) {
+      var commandString = "command: [movie-this : "+ movieName +"]";
+      var output = [];
 
-  if (!error && response.statusCode === 200) {
-    var movieObj = JSON.parse(body);
+      var movieObj = JSON.parse(body);
+      if(movieObj.Response === "True"){
 
-    console.log("--------------------------------------------------");
-    console.log("Title: ", movieObj.Title);
-    console.log("Release Year: ", movieObj.Year);
-    console.log("IMDB Rating: ", movieObj.imdbRating);
+        console.log("movie object",movieObj);
 
-    for(let rating of movieObj.Ratings){
-      if(rating.Source.match(/Rotten Tomatoes/i)){
-        console.log("Rotten Tomatoes Rating: ", rating.Value);
-        break;
+        output.push("Title: " + movieObj.Title);
+        output.push("Release Year: " + movieObj.Year);
+        output.push("IMDB Rating: " + movieObj.imdbRating);
+
+         for(let rating of movieObj.Ratings){
+          if(rating.Source.match(/Rotten Tomatoes/i)){
+            output.push("Rotten Tomatoes Rating: " + rating.Value);
+            break;
+          }
+        }
+
+        output.push("Country: " + movieObj.Country);
+        output.push("Language: " + movieObj.Language);
+        output.push("Plot: " + movieObj.Plot);
+        output.push("Actors: " + movieObj.Actors);
       }
+      else{
+        output.push(movieObj.Error);
+      }
+      output.push("--------------------------------------------------")
+      var outputStr = output.join("\n");
+      console.log(outputStr);
+      log(commandString, outputStr);
     }
-
-    console.log("Country: ", movieObj.Country);
-    console.log("Language: ", movieObj.Language);
-    console.log("Plot: ", movieObj.Plot);
-    console.log("Actors: ", movieObj.Actors);
-    console.log("--------------------------------------------------");    
-  }
-});
-
+  });
 }
 
 function doWhatItSays(){
@@ -124,10 +158,31 @@ function doWhatItSays(){
   });
 
   rl.on('line', function (line) {
-    console.log(line);
     var dataArr = line.split(",");
     doAction(dataArr[0], dataArr[1]);
   });
 }
 
+
+function log(commandString, output){
+  var fs = require("fs");
+
+  var contentArray = [];
+  contentArray.push("**************************************************");
+  contentArray.push(commandString);
+  contentArray.push("**************************************************");
+  contentArray.push(output);
+  contentArray.push("\n");
+
+  var content = contentArray.join("\n");
+
+  fs.appendFile("log.txt", content, function(err) {
+    if (err) {
+      console.log(err);
+    }
+    else {
+      console.log("Log appended!");
+    }
+  });
+}
 
