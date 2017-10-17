@@ -7,7 +7,7 @@ if(inputArgs.length === 2){
 
 var command = inputArgs[2];
 
-var queryString = inputArgs.slice(3).join(" ");
+var queryString = inputArgs.slice(3).join(" ").trim();
 console.log("query string: ", queryString);
 
 doAction(command, queryString);
@@ -69,10 +69,7 @@ function spotifySong(song){
   console.log(queryStr);
 
   spotifyClient.search({ type: 'track', query: queryStr}, function(err, data) {
-    console.log("data: ", data);
-
     if (!err) {
-
       var querySong = (song === undefined || song === "") ? "The Sign by Ace of Base" : song;
       var commandString = "command: [spotify-this-song : "+ querySong +"]";
 
@@ -105,7 +102,6 @@ function spotifySong(song){
 }
 
 function getMovieInfo(movie){
-
   var request = require("request");
   var movieName = (movie === undefined || movie === "")? "Mr. Nobody." : movie;
   console.log(movieName);
@@ -119,8 +115,6 @@ function getMovieInfo(movie){
 
       var movieObj = JSON.parse(body);
       if(movieObj.Response === "True"){
-
-        console.log("movie object",movieObj);
 
         output.push("Title: " + movieObj.Title);
         output.push("Release Year: " + movieObj.Year);
@@ -162,7 +156,6 @@ function doWhatItSays(){
     doAction(dataArr[0], dataArr[1]);
   });
 }
-
 
 function log(commandString, output){
   var fs = require("fs");
